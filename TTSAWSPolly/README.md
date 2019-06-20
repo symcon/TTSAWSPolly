@@ -54,7 +54,7 @@ Es werden keine Statusvariablen oder Profile angelegt.
 ### 7. PHP-Befehlsreferenz
 
 `string TTSAWSPOLLY_GenerateData(integer $InstanzID, String $Text);`
-Fragt über AWS den Text an und liefert die Sprachdaten in der Rückgabe zuürck.
+Fragt über AWS den Text an und liefert die Sprachdaten in der Rückgabe zurück.
 `echo TTSAWSPOLLY_GenerateData(12345, "Dies ist ein Test");``
 
 `string TTSAWSPOLLY_GenerateFile(integer $InstanzID, String $Text);`
