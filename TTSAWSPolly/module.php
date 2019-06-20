@@ -28,23 +28,42 @@ class TTSAWSPolly extends IPSModule
     if ($this->ReadPropertyString("OutputFormat") == "pcm" && $this->ReadPropertyString("SampleRate") == "22050") {
       echo $this->Translate("PCM (WAV) is not compatible with 22050 Hz as sample rate");
     }
+    
   }
 
   public function GetConfigurationForm()
   {
 
-    $data = json_decode(file_get_contents(__DIR__ . '/form.json'));
+    $data = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
 
     try {
       $result = $this->DescribeVoices();
       foreach ($result->get('Voices') as $voice) {
-        $data->elements[3]->options[] = [
+        $data["elements"][3]["options"][] = [
           "label" => $voice["Name"] . " (" . $voice["Gender"] . ", " . $voice["LanguageName"] . ")",
           "value" => $voice["Id"]
         ];
       }
-    } catch (Exception $e) {
-      //just ignore errors
+    } catch (Aws\Exception\AwsException $e) {
+      //hide some options
+      array_pop( $data["elements"]);
+      array_pop( $data["elements"]);
+      array_pop( $data["elements"]);
+
+      //show an PopupAlert with the error if credentials are set
+      if ($this->ReadPropertyString("AccessKey") != "" || $this->ReadPropertyString("SecretKey") != "") {
+        $data["elements"][] = [
+          "type" => "PopupAlert",
+          "popup" => [
+            "items" => [
+              [
+                "type" => "Label",
+                "caption" => $e->getAwsErrorMessage()
+              ]
+            ]
+          ]
+        ];
+      }
     }
 
     return json_encode($data);
