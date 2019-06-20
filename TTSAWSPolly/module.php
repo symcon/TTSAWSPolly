@@ -105,9 +105,42 @@ class TTSAWSPolly extends IPSModule
     return $this->GetClient()->synthesizeSpeech($data)->get('AudioStream')->getContents();
   }
 
+  private function AddWAVHeader($Data)
+  {
+
+    $sampleRate = 16000; 
+    if($this->ReadPropertyString("SampleRate") != "") {
+      $sampleRate = intval($this->ReadPropertyString("SampleRate"));
+    }
+    
+    //add RIFF header: https://gist.github.com/Jon-Schneider/8b7c53d27a7a13346a643d$
+    $header = "RIFF";
+    $header .= pack("l", strlen($Data) + 32);
+    $header .= "WAVE";
+    $header .= "fmt ";
+    $header .= pack("l", 16); //PCM = 16
+    $header .= pack("s", 1);  //PCM = 1
+    $header .= pack("s", 1);               //Channels
+    $header .= pack("l", $sampleRate);     //Sample Rate
+    $header .= pack("l", 2 * $sampleRate); //Byte Rate
+    $header .= pack("s", 2);               //Sample Alignment
+    $header .= pack("s", 16);              //Bit Depth
+    $header .= "data";
+    $header .= pack("l", strlen($Data));
+    return $header . $Data;
+    
+  }
+  
   public function GenerateData(string $Text)
   {
-    return base64_encode($this->SynthesizeSpeech($Text));
+      
+    $data = $this->SynthesizeSpeech($Text);
+    
+    if ($this->ReadPropertyString("OutputFormat") == "pcm") {
+      $data = $this->AddWAVHeader($data);
+    }
+      
+    return base64_encode($data);
   }
 
   public function GenerateFile(string $Text)
@@ -118,12 +151,15 @@ class TTSAWSPolly extends IPSModule
       mkdir($dir);
     }
 
+    $data = $this->SynthesizeSpeech($Text);
+    
     switch ($this->ReadPropertyString("OutputFormat")) {
       case "mp3":
         $file = md5($Text) . ".mp3";
         break;
       case "pcm";
         $file = md5($Text) . ".wav";
+        $data = $this->AddWAVHeader($data);
         break;
       case "ogg_vorbis":
         $file = md5($Text) . ".ogg";
@@ -131,9 +167,9 @@ class TTSAWSPolly extends IPSModule
       default:
         throw new Exception("Unsupported output format " . $this->ReadPropertyString("OutputFormat"));
     }
-
+    
     if (!file_exists($dir . DIRECTORY_SEPARATOR . $file)) {
-      file_put_contents($dir . DIRECTORY_SEPARATOR . $file, $this->SynthesizeSpeech($Text));
+      file_put_contents($dir . DIRECTORY_SEPARATOR . $file, $data);
     }
 
     return $dir . DIRECTORY_SEPARATOR . $file;
