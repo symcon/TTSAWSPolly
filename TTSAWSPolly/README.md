@@ -53,10 +53,10 @@ Es werden keine Statusvariablen oder Profile angelegt.
 
 ### 7. PHP-Befehlsreferenz
 
-`string TTSAWSPOLLY_GetData(integer $InstanzID, String $Text);`
+`string TTSAWSPOLLY_GenerateData(integer $InstanzID, String $Text);`
 Fragt über AWS den Text an und liefert die Sprachdaten in der Rückgabe zuürck.
-`echo TTSAWSPOLLY_GetData(12345, "Dies ist ein Test");``
+`echo TTSAWSPOLLY_GenerateData(12345, "Dies ist ein Test");``
 
-`string TTSAWSPOLLY_GetFilename(integer $InstanzID, String $Text);`
-Fragt über AWS den Text an und liefert den Dateinamen zu den Sprachdaten zuürck.
-`echo TTSAWSPOLLY_GetFilename(12345, "Dies ist ein Test");``
+`string TTSAWSPOLLY_GenerateFile(integer $InstanzID, String $Text);`
+Fragt über AWS den Text an und liefert den Dateinamen zu den Sprachdaten zurück.
+`echo TTSAWSPOLLY_GenerateFile(12345, "Dies ist ein Test");``

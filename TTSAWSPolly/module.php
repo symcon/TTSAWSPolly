@@ -86,12 +86,12 @@ class TTSAWSPolly extends IPSModule
     return $this->GetClient()->synthesizeSpeech($data)->get('AudioStream')->getContents();
   }
 
-  public function GetData(string $Text)
+  public function GenerateData(string $Text)
   {
     return base64_encode($this->SynthesizeSpeech($Text));
   }
 
-  public function GetFilename(string $Text)
+  public function GenerateFile(string $Text)
   {
     $dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "awspolly_" . $this->InstanceID;
 
