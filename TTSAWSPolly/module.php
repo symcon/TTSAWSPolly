@@ -97,9 +97,7 @@ class TTSAWSPolly extends IPSModule
     ];
 
     if ($this->ReadPropertyString("SampleRate") != "") {
-      $data[] = [
-        'SampleRate' => $this->ReadPropertyString("SampleRate")
-      ];
+      $data['SampleRate'] = $this->ReadPropertyString("SampleRate");
     }
 
     return $this->GetClient()->synthesizeSpeech($data)->get('AudioStream')->getContents();
@@ -113,6 +111,9 @@ class TTSAWSPolly extends IPSModule
       $sampleRate = intval($this->ReadPropertyString("SampleRate"));
     }
     
+    $channels = 1;
+    $bits = 16;
+
     //add RIFF header: https://gist.github.com/Jon-Schneider/8b7c53d27a7a13346a643d$
     $header = "RIFF";
     $header .= pack("l", strlen($Data) + 32);
@@ -120,11 +121,11 @@ class TTSAWSPolly extends IPSModule
     $header .= "fmt ";
     $header .= pack("l", 16); //PCM = 16
     $header .= pack("s", 1);  //PCM = 1
-    $header .= pack("s", 1);               //Channels
-    $header .= pack("l", $sampleRate);     //Sample Rate
-    $header .= pack("l", 2 * $sampleRate); //Byte Rate
-    $header .= pack("s", 2);               //Sample Alignment
-    $header .= pack("s", 16);              //Bit Depth
+    $header .= pack("s", $channels);                              //Channels
+    $header .= pack("l", $sampleRate);                            //Sample Rate
+    $header .= pack("l", 2 * $sampleRate);                        //Byte Rate
+    $header .= pack("s", intval($channels * (($bits + 7) / 8)));  //Sample Alignment
+    $header .= pack("s", $bits);                                  //Bit Depth
     $header .= "data";
     $header .= pack("l", strlen($Data));
     return $header . $Data;
