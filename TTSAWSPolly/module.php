@@ -116,13 +116,13 @@ class TTSAWSPolly extends IPSModule
         $header .= 'WAVE';
         $header .= 'fmt ';
         $header .= pack('l', 16); //PCM = 16
-    $header .= pack('s', 1);  //PCM = 1
-    $header .= pack('s', $channels);                              //Channels
-    $header .= pack('l', $sampleRate);                            //Sample Rate
-    $header .= pack('l', 2 * $sampleRate);                        //Byte Rate
-    $header .= pack('s', intval($channels * (($bits + 7) / 8)));  //Sample Alignment
-    $header .= pack('s', $bits);                                  //Bit Depth
-    $header .= 'data';
+        $header .= pack('s', 1);  //PCM = 1
+        $header .= pack('s', $channels);                              //Channels
+        $header .= pack('l', $sampleRate);                            //Sample Rate
+        $header .= pack('l', 2 * $sampleRate);                        //Byte Rate
+        $header .= pack('s', intval($channels * (($bits + 7) / 8)));  //Sample Alignment
+        $header .= pack('s', $bits);                                  //Bit Depth
+        $header .= 'data';
         $header .= pack('l', strlen($Data));
         return $header . $Data;
     }
