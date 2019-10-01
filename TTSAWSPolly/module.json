@@ -9,5 +9,6 @@
   "parentRequirements": [],
   "childRequirements": [],
   "implemented": [],
-  "prefix": "TTSAWSPOLLY"
+  "prefix": "TTSAWSPOLLY",
+  "url": "https://github.com/symcon/TTSAWSPolly/tree/master/TTSAWSPolly"
 }
