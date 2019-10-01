@@ -3,6 +3,9 @@
   "author": "Symcon GmbH",
   "name": "Text to Speech (AWS Polly)",
   "url": "https://www.symcon.de/",
+  "compatibility": {
+		"version": "5.2"
+	},
   "version": "1.0",
   "build": 0,
   "date": 0
