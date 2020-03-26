@@ -147,7 +147,7 @@ class TTSAWSPolly extends IPSModule
         }
 
         $data = $this->SynthesizeSpeech($Text);
-        $info = $this->ReadPropertyString('VoiceID') . '_' . $this->ReadPropertyString('SampleRate') . '_';
+        $info = $this->ReadPropertyString('VoiceId') . '_' . $this->ReadPropertyString('SampleRate') . '_';
 
         switch ($this->ReadPropertyString('OutputFormat')) {
       case 'mp3':
