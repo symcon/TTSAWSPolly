@@ -147,17 +147,18 @@ class TTSAWSPolly extends IPSModule
         }
 
         $data = $this->SynthesizeSpeech($Text);
+        $info = $this->ReadPropertyString('VoiceID') . '_' . $this->ReadPropertyString('SampleRate') . '_';
 
         switch ($this->ReadPropertyString('OutputFormat')) {
       case 'mp3':
-        $file = md5($Text) . '.mp3';
+        $file = $info . md5($Text) . '.mp3';
         break;
       case 'pcm':
-        $file = md5($Text) . '.wav';
+        $file = $info . md5($Text) . '.wav';
         $data = $this->AddWAVHeader($data);
         break;
       case 'ogg_vorbis':
-        $file = md5($Text) . '.ogg';
+        $file = $info . md5($Text) . '.ogg';
         break;
       default:
         throw new Exception('Unsupported output format ' . $this->ReadPropertyString('OutputFormat'));
