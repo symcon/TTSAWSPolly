@@ -28,7 +28,7 @@ Das "Text to Speech (AWS Polly)" Modul kann direkt über den Module Store instal
 
 ### 4. Einrichten der Instanzen in IP-Symcon
 
-- Unter "Instanz hinzufügen" ist das 'Text to Speech (AWS Polly)'-Modul unter dem Hersteller '(Sonstige)' aufgeführt.  
+- Unter "Instanz hinzufügen" kann das 'Text to Speech (AWS Polly)'-Modul mithilfe der Schnellsuche gefunden werden.  
 
 __Konfigurationsseite__:
 
