@@ -6,10 +6,11 @@ Das Modul dient dazu Sounddaten-/dateien zu generieren, welche z.B. für Audio N
 1. [Funktionsumfang](#1-funktionsumfang)
 2. [Voraussetzungen](#2-voraussetzungen)
 3. [Software-Installation](#3-software-installation)
-4. [Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
-5. [Statusvariablen und Profile](#5-statusvariablen-und-profile)
-6. [WebFront](#6-webfront)
-7. [PHP-Befehlsreferenz](#7-php-befehlsreferenz)
+4. [Einrichten des Benutzers im AWS IAM](#4-einrichten-des-benutzers-im-aws-iam)
+5. [Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
+6. [Statusvariablen und Profile](#5-statusvariablen-und-profile)
+7. [WebFront](#6-webfront)
+8. [PHP-Befehlsreferenz](#7-php-befehlsreferenz)
 
 ### 1. Funktionsumfang
 
@@ -26,7 +27,28 @@ Das Modul dient dazu Sounddaten-/dateien zu generieren, welche z.B. für Audio N
 
 Das "Text to Speech (AWS Polly)" Modul kann direkt über den Module Store installiert werden.
 
-### 4. Einrichten der Instanzen in IP-Symcon
+### 4. Einrichten des Benutzers im AWS IAM
+
+Auf der Amazon AWS Homepage muss bei den AWS Services nach dem IAM gesucht werden.  
+![Managementkonsole][console]
+
+Innerhalb des IAM muss ein neuer Benutzer hinzugefügt werden  
+![Benutzerverwaltung][user]
+![Hinzufügen des Benutzers][add]
+
+Anschließend muss ein sprechender Benutzername vergeben und der Programmgesteuerte Zugriff aktiviert werden.  
+![Details des Benutzers][details]
+
+Als Richtlinie muss "AmazonPollyFullAccess" aktiviert werden.  
+![Berechtigungen][permissions]
+
+Den nächsten Dialog mit "Weiter: Prüfen" überspringen.  
+Den Benutzer legt man über "Benutzer erstellen" fertig an.
+
+Nach dem Anlegen des Benutzers wird diesem ein ZugriffsschlüsselID und geheimer Zugriffsschlüssel zugewiesen.
+![Zugriffsschlüssel][keys]
+
+### 5. Einrichten der Instanzen in IP-Symcon
 
 - Unter "Instanz hinzufügen" kann das 'Text to Speech (AWS Polly)'-Modul mithilfe des Schnellfilters gefunden werden.
     - Weitere Informationen zum Hinzufügen von Instanzen in der [Dokumentation der Instanzen](https://www.symcon.de/service/dokumentation/konzepte/instanzen/#Instanz_hinzufügen)
@@ -44,15 +66,15 @@ Abtastrate     | Abtastrate (Standard, 8000 Hz, 16000 Hz, 22050 Hz) der Ausgabe
 
 Nach Eintragung des Access Key/Secret Key muss die Konfiguration gespeichert werden, um die verfügbaren Sprachen zu Laden.
 
-### 5. Statusvariablen und Profile
+### 6. Statusvariablen und Profile
 
 Es werden keine Statusvariablen oder Profile angelegt.
 
-### 6. WebFront
+### 7. WebFront
 
 Über das WebFront ist keine weitere Konfiguration ode Anzeige möglich.
 
-### 7. PHP-Befehlsreferenz
+### 8. PHP-Befehlsreferenz
 
 `string TTSAWSPOLLY_GenerateData(integer $InstanzID, String $Text);`
 Fragt über AWS den Text an und liefert die Sprachdaten in der Rückgabe zurück.
@@ -61,3 +83,11 @@ Fragt über AWS den Text an und liefert die Sprachdaten in der Rückgabe zurück
 `string TTSAWSPOLLY_GenerateFile(integer $InstanzID, String $Text);`
 Fragt über AWS den Text an und liefert den Dateinamen zu den Sprachdaten zurück.
 `echo TTSAWSPOLLY_GenerateFile(12345, "Dies ist ein Test");``
+
+[console]: ../imgs/aws-managementconsole.png
+[user]: ../imgs/aws-iam-user.png
+[add]: ../imgs/aws-iam-useradd.png
+[details]: ../imgs/aws-iam-userdetails.png
+[keys]: ../imgs/aws-iam-userkeys.png
+[permissions]: ../imgs/aws-iam-userpermissions.png
+
