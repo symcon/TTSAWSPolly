@@ -32,11 +32,12 @@ Das "Text to Speech (AWS Polly)" Modul kann direkt über den Module Store instal
 Auf der Amazon AWS Homepage muss bei den AWS Services nach dem IAM gesucht werden.  
 ![Managementkonsole][console]
 
+
 Innerhalb des IAM muss ein neuer Benutzer hinzugefügt werden  
 ![Benutzerverwaltung][user]
 ![Hinzufügen des Benutzers][add]
 
-Anschließend muss ein sprechender Benutzername vergeben und der Programmgesteuerte Zugriff aktiviert werden.  
+Anschließend sollte ein sprechender Benutzername vergeben und "Programmgesteuerter Zugriff" aktiviert werden.  
 ![Details des Benutzers][details]
 
 Als Richtlinie muss "AmazonPollyFullAccess" aktiviert werden.  
@@ -45,7 +46,7 @@ Als Richtlinie muss "AmazonPollyFullAccess" aktiviert werden.
 Den nächsten Dialog mit "Weiter: Prüfen" überspringen.  
 Den Benutzer legt man über "Benutzer erstellen" fertig an.
 
-Nach dem Anlegen des Benutzers wird diesem ein ZugriffsschlüsselID und geheimer Zugriffsschlüssel zugewiesen.
+Nach dem Anlegen des Benutzers wird diesem eine ZugriffsschlüsselID und geheimer Zugriffsschlüssel zugewiesen.
 ![Zugriffsschlüssel][keys]
 
 ### 5. Einrichten der Instanzen in IP-Symcon
