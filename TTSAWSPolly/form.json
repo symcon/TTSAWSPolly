@@ -136,6 +136,21 @@
           "value": "22050"
         }
       ]
+    },
+    {
+      "name": "TextType",
+      "type": "Select",
+      "caption": "Text Type",
+      "options": [
+        {
+          "label": "Text",
+          "value": "text"
+        },
+        {
+          "label": "SSML",
+          "value": "ssml"
+        }
+      ]
     }
   ]
 }

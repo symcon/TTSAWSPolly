@@ -64,6 +64,7 @@ Region         | Region in der Polly genutzt werden soll
 Sprache        | Sprache in der die Ausgabe stattfinden soll
 Ausgabeformat  | Format (MP3/WAV/OGG) der Ausgabe
 Abtastrate     | Abtastrate (Standard, 8000 Hz, 16000 Hz, 22050 Hz) der Ausgabe
+Texttyp        | Typ vom Text. Bei SSML können die speziellen SSML Tags verwendet werden
 
 Nach Eintragung des Access Key/Secret Key muss die Konfiguration gespeichert werden, um die verfügbaren Sprachen zu Laden.
 

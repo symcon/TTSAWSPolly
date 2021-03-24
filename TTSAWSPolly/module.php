@@ -18,6 +18,7 @@ class TTSAWSPolly extends IPSModule
         $this->RegisterPropertyString('VoiceId', 'Marlene');
         $this->RegisterPropertyString('OutputFormat', 'mp3');
         $this->RegisterPropertyString('SampleRate', '');
+        $this->RegisterPropertyString('TextType', 'text');
     }
 
     public function ApplyChanges()
@@ -45,6 +46,7 @@ class TTSAWSPolly extends IPSModule
             }
         } catch (Aws\Exception\AwsException $e) {
             //hide some options
+            array_pop($data['elements']);
             array_pop($data['elements']);
             array_pop($data['elements']);
             array_pop($data['elements']);
@@ -89,6 +91,7 @@ class TTSAWSPolly extends IPSModule
     {
         $data = [
             'Text'         => $Text,
+            'TextType'     => $this->ReadPropertyString('TextType'),
             'OutputFormat' => $this->ReadPropertyString('OutputFormat'),
             'VoiceId'      => $this->ReadPropertyString('VoiceId'),
         ];
