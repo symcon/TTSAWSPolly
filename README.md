@@ -6,5 +6,5 @@
 
 Folgende Module beinhaltet das TTSAWSPolly Repository:
 
-- __Text to Speech (AWS Polly)__ ([Dokumentation](TTSAWSPolly))  
+- __Text to Speech (AWS Polly)__ ([Dokumentation](https://www.symcon.de/de/service/dokumentation/modulreferenz/ttsawspolly))  
 	Kann Sounddaten/-dateien in verschiedenen Formaten erzeugen
