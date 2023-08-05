@@ -4,10 +4,9 @@ namespace Aws;
 use Aws\Api\ApiProvider;
 use Aws\Api\DocModel;
 use Aws\Api\Service;
-use Aws\ClientSideMonitoring\ApiCallAttemptMonitoringMiddleware;
-use Aws\ClientSideMonitoring\ApiCallMonitoringMiddleware;
-use Aws\ClientSideMonitoring\ConfigurationProvider;
 use Aws\EndpointDiscovery\EndpointDiscoveryMiddleware;
+use Aws\EndpointV2\EndpointProviderV2;
+use Aws\Exception\AwsException;
 use Aws\Signature\SignatureProvider;
 use GuzzleHttp\Psr7\Uri;
 
@@ -39,11 +38,26 @@ class AwsClient implements AwsClientInterface
     /** @var callable */
     private $credentialProvider;
 
+    /** @var callable */
+    private $tokenProvider;
+
     /** @var HandlerList */
     private $handlerList;
 
     /** @var array*/
     private $defaultRequestOptions;
+
+    /** @var array*/
+    private $clientContextParams = [];
+
+    /** @var array*/
+    protected $clientBuiltIns = [];
+
+    /** @var  EndpointProviderV2 | callable */
+    protected $endpointProvider;
+
+    /** @var callable */
+    protected $serializer;
 
     /**
      * Get an array of client constructor arguments used by the client.
@@ -71,6 +85,25 @@ class AwsClient implements AwsClientInterface
      *   credentials or return null. See Aws\Credentials\CredentialProvider for
      *   a list of built-in credentials providers. If no credentials are
      *   provided, the SDK will attempt to load them from the environment.
+     * - token:
+     *   (Aws\Token\TokenInterface|array|bool|callable) Specifies
+     *   the token used to authorize requests. Provide an
+     *   Aws\Token\TokenInterface object, an associative array of
+     *   "token" and an optional "expires" key, `false` to use no
+     *   token, or a callable token provider used to create a
+     *   token or return null. See Aws\Token\TokenProvider for
+     *   a list of built-in token providers. If no token is
+     *   provided, the SDK will attempt to load one from the environment.
+     * - csm:
+     *   (Aws\ClientSideMonitoring\ConfigurationInterface|array|callable) Specifies
+     *   the credentials used to sign requests. Provide an
+     *   Aws\ClientSideMonitoring\ConfigurationInterface object, a callable
+     *   configuration provider used to create client-side monitoring configuration,
+     *   `false` to disable csm, or an associative array with the following keys:
+     *   enabled: (bool) Set to true to enable client-side monitoring, defaults
+     *   to false; host: (string) the host location to send monitoring events to,
+     *   defaults to 127.0.0.1; port: (int) The port used for the host connection,
+     *   defaults to 31000; client_id: (string) An identifier for this project
      * - debug: (bool|array) Set to true to display debug information when
      *   sending requests. Alternatively, you can provide an associative array
      *   with the following keys: logfn: (callable) Function that is invoked
@@ -102,9 +135,9 @@ class AwsClient implements AwsClientInterface
      *   Provide an instance of Aws\EndpointDiscovery\ConfigurationInterface,
      *   an instance Aws\CacheInterface, a callable that provides a promise for
      *   a Configuration object, or an associative array with the following
-     *   keys: enabled: (bool) Set to true to enable endpoint discovery,
-     *   defaults to false; cache_limit: (int) The maximum number of keys in the
-     *   endpoints cache, defaults to 1000.
+     *   keys: enabled: (bool) Set to true to enable endpoint discovery, false
+     *   to explicitly disable it, defaults to false; cache_limit: (int) The
+     *   maximum number of keys in the endpoints cache, defaults to 1000.
      * - endpoint_provider: (callable) An optional PHP callable that
      *   accepts a hash of options including a "service" and "region" key and
      *   returns NULL or a hash of endpoint data, of which the "endpoint" key
@@ -137,8 +170,16 @@ class AwsClient implements AwsClientInterface
      * - region: (string, required) Region to connect to. See
      *   http://docs.aws.amazon.com/general/latest/gr/rande.html for a list of
      *   available regions.
-     * - retries: (int, default=int(3)) Configures the maximum number of
-     *   allowed retries for a client (pass 0 to disable retries).
+     * - retries: (int, Aws\Retry\ConfigurationInterface, Aws\CacheInterface,
+     *   array, callable) Configures the retry mode and maximum number of
+     *   allowed retries for a client (pass 0 to disable retries). Provide an
+     *   integer for 'legacy' mode with the specified number of retries.
+     *   Otherwise provide an instance of Aws\Retry\ConfigurationInterface, an
+     *   instance of  Aws\CacheInterface, a callable function, or an array with
+     *   the following keys: mode: (string) Set to 'legacy', 'standard' (uses
+     *   retry quota management), or 'adapative' (an experimental mode that adds
+     *   client-side rate limiting to standard mode); max_attempts (int) The
+     *   maximum number of attempts for a given request.
      * - scheme: (string, default=string(5) "https") URI scheme to use when
      *   connecting connect. The SDK will utilize "https" endpoints (i.e.,
      *   utilize SSL/TLS connections) by default. You can attempt to connect to
@@ -153,6 +194,10 @@ class AwsClient implements AwsClientInterface
      *   signature version to use with a service (e.g., v4). Note that
      *   per/operation signature version MAY override this requested signature
      *   version.
+     * - use_aws_shared_config_files: (bool, default=bool(true)) Set to false to
+     *   disable checking for shared config file in '~/.aws/config' and
+     *   '~/.aws/credentials'.  This will override the AWS_CONFIG_FILE
+     *   environment variable.
      * - validate: (bool, default=bool(true)) Set to false to disable
      *   client-side parameter validation.
      * - version: (string, required) The version of the webservice to
@@ -179,16 +224,27 @@ class AwsClient implements AwsClientInterface
         $this->signatureProvider = $config['signature_provider'];
         $this->endpoint = new Uri($config['endpoint']);
         $this->credentialProvider = $config['credentials'];
+        $this->tokenProvider = $config['token'];
         $this->region = isset($config['region']) ? $config['region'] : null;
         $this->config = $config['config'];
+        $this->setClientBuiltIns($args);
+        $this->clientContextParams = $this->setClientContextParams($args);
         $this->defaultRequestOptions = $config['http'];
+        $this->endpointProvider = $config['endpoint_provider'];
+        $this->serializer = $config['serializer'];
         $this->addSignatureMiddleware();
         $this->addInvocationId();
-        $this->addClientSideMonitoring($args);
         $this->addEndpointParameterMiddleware($args);
         $this->addEndpointDiscoveryMiddleware($config, $args);
+        $this->addRequestCompressionMiddleware($config);
         $this->loadAliases();
         $this->addStreamRequestPayload();
+        $this->addRecursionDetection();
+        $this->addRequestBuilder();
+
+        if (!$config['suppress_php_deprecation_warning']) {
+            $this->emitDeprecationWarning();
+        }
 
         if (isset($args['with_resolved'])) {
             $args['with_resolved']($config);
@@ -214,6 +270,7 @@ class AwsClient implements AwsClientInterface
         $fn = $this->credentialProvider;
         return $fn();
     }
+
 
     public function getEndpoint()
     {
@@ -249,6 +306,33 @@ class AwsClient implements AwsClientInterface
         return new Command($name, $args, clone $this->getHandlerList());
     }
 
+    public function getEndpointProvider()
+    {
+        return $this->endpointProvider;
+    }
+
+    /**
+     * Provides the set of service context parameter
+     * key-value pairs used for endpoint resolution.
+     *
+     * @return array
+     */
+    public function getClientContextParams()
+    {
+        return $this->clientContextParams;
+    }
+
+    /**
+     * Provides the set of built-in keys and values
+     * used for endpoint resolution
+     *
+     * @return array
+     */
+    public function getClientBuiltIns()
+    {
+        return $this->clientBuiltIns;
+    }
+
     public function __sleep()
     {
         throw new \RuntimeException('Instances of ' . static::class
@@ -260,7 +344,7 @@ class AwsClient implements AwsClientInterface
      *
      * @return callable
      */
-    final protected function getSignatureProvider()
+    final public function getSignatureProvider()
     {
         return $this->signatureProvider;
     }
@@ -276,7 +360,7 @@ class AwsClient implements AwsClientInterface
         $klass = get_class($this);
 
         if ($klass === __CLASS__) {
-            return ['', 'Aws\Exception\AwsException'];
+            return ['', AwsException::class];
         }
 
         $service = substr($klass, strrpos($klass, '\\') + 1, -6);
@@ -327,6 +411,13 @@ class AwsClient implements AwsClientInterface
         $resolver = static function (
             CommandInterface $c
         ) use ($api, $provider, $name, $region, $version) {
+            if (!empty($c['@context']['signing_region'])) {
+                $region = $c['@context']['signing_region'];
+            }
+            if (!empty($c['@context']['signing_service'])) {
+                $name = $c['@context']['signing_service'];
+            }
+
             $authType = $api->getOperation($c->getName())['authtype'];
             switch ($authType){
                 case 'none':
@@ -335,13 +426,39 @@ class AwsClient implements AwsClientInterface
                 case 'v4-unsigned-body':
                     $version = 'v4-unsigned-body';
                     break;
+                case 'bearer':
+                    $version = 'bearer';
+                    break;
+            }
+            if (isset($c['@context']['signature_version'])) {
+                if ($c['@context']['signature_version'] == 'v4a') {
+                    $version = 'v4a';
+                }
+            }
+            if (!empty($endpointAuthSchemes = $c->getAuthSchemes())) {
+                $version = $endpointAuthSchemes['version'];
+                $name = isset($endpointAuthSchemes['name']) ?
+                    $endpointAuthSchemes['name'] : $name;
+                $region = isset($endpointAuthSchemes['region']) ?
+                    $endpointAuthSchemes['region'] : $region;
             }
             return SignatureProvider::resolve($provider, $version, $name, $region);
         };
         $this->handlerList->appendSign(
-            Middleware::signer($this->credentialProvider, $resolver),
+            Middleware::signer($this->credentialProvider, $resolver, $this->tokenProvider),
             'signer'
         );
+    }
+
+    private function addRequestCompressionMiddleware($config)
+    {
+        if (empty($config['disable_request_compression'])) {
+            $list = $this->getHandlerList();
+            $list->appendBuild(
+                RequestCompressionMiddleware::wrap($config),
+                'request-compression'
+            );
+        }
     }
 
     private function addInvocationId()
@@ -350,31 +467,6 @@ class AwsClient implements AwsClientInterface
         $this->handlerList->prependSign(Middleware::invocationId(), 'invocation-id');
     }
 
-    private function addClientSideMonitoring($args)
-    {
-        $options = ConfigurationProvider::defaultProvider($args);
-
-        $this->handlerList->appendBuild(
-            ApiCallMonitoringMiddleware::wrap(
-                $this->credentialProvider,
-                $options,
-                $this->region,
-                $this->getApi()->getServiceId()
-            ),
-            'ApiCallMonitoringMiddleware'
-        );
-
-        $callAttemptMiddleware = ApiCallAttemptMonitoringMiddleware::wrap(
-            $this->credentialProvider,
-            $options,
-            $this->region,
-            $this->getApi()->getServiceId()
-        );
-        $this->handlerList->appendAttempt (
-            $callAttemptMiddleware,
-            'ApiCallAttemptMonitoringMiddleware'
-        );
-    }
     private function loadAliases($file = null)
     {
         if (!isset($this->aliases)) {
@@ -401,6 +493,136 @@ class AwsClient implements AwsClientInterface
             'StreamRequestPayloadMiddleware'
         );
     }
+
+    private function addRecursionDetection()
+    {
+        // Add recursion detection header to requests
+        // originating in supported Lambda runtimes
+        $this->handlerList->appendBuild(
+            Middleware::recursionDetection(), 'recursion-detection'
+        );
+    }
+
+    /**
+     * Adds the `builder` middleware such that a client's endpoint
+     * provider and endpoint resolution arguments can be passed.
+     */
+    private function addRequestBuilder()
+    {
+        $handlerList = $this->getHandlerList();
+        $serializer = $this->serializer;
+        $endpointProvider = $this->endpointProvider;
+        $endpointArgs = $this->getEndpointProviderArgs();
+
+        $handlerList->prependBuild(
+            Middleware::requestBuilder(
+                $serializer,
+                $endpointProvider,
+                $endpointArgs
+            ),
+            'builderV2'
+        );
+    }
+
+    /**
+     * Retrieves client context param definition from service model,
+     * creates mapping of client context param names with client-provided
+     * values.
+     *
+     * @return array
+     */
+    private function setClientContextParams($args)
+    {
+        $api = $this->getApi();
+        $resolvedParams = [];
+        if (!empty($paramDefinitions = $api->getClientContextParams())) {
+            foreach($paramDefinitions as $paramName => $paramValue) {
+                if (isset($args[$paramName])) {
+                   $result[$paramName] = $args[$paramName];
+               }
+            }
+        }
+        return $resolvedParams;
+    }
+
+    /**
+     * Retrieves and sets default values used for endpoint resolution.
+     */
+    private function setClientBuiltIns($args)
+    {
+        $builtIns = [];
+        $config = $this->getConfig();
+        $service = $args['service'];
+
+        $builtIns['SDK::Endpoint'] = isset($args['endpoint']) ? $args['endpoint'] : null;
+        $builtIns['AWS::Region'] = $this->getRegion();
+        $builtIns['AWS::UseFIPS'] = $config['use_fips_endpoint']->isUseFipsEndpoint();
+        $builtIns['AWS::UseDualStack'] = $config['use_dual_stack_endpoint']->isUseDualstackEndpoint();
+        if ($service === 's3' || $service === 's3control'){
+            $builtIns['AWS::S3::UseArnRegion'] = $config['use_arn_region']->isUseArnRegion();
+        }
+        if ($service === 's3') {
+            $builtIns['AWS::S3::UseArnRegion'] = $config['use_arn_region']->isUseArnRegion();
+            $builtIns['AWS::S3::Accelerate'] = $config['use_accelerate_endpoint'];
+            $builtIns['AWS::S3::ForcePathStyle'] = $config['use_path_style_endpoint'];
+            $builtIns['AWS::S3::DisableMultiRegionAccessPoints'] = $config['disable_multiregion_access_points'];
+        }
+        $this->clientBuiltIns += $builtIns;
+    }
+
+    /**
+     * Retrieves arguments to be used in endpoint resolution.
+     *
+     * @return array
+     */
+    public function getEndpointProviderArgs()
+    {
+        return $this->normalizeEndpointProviderArgs();
+    }
+
+    /**
+     * Combines built-in and client context parameter values in
+     * order of specificity.  Client context parameter values supersede
+     * built-in values.
+     *
+     * @return array
+     */
+    private function normalizeEndpointProviderArgs()
+    {
+        $normalizedBuiltIns = [];
+
+        foreach($this->clientBuiltIns as $name => $value) {
+            $normalizedName = explode('::', $name);
+            $normalizedName = $normalizedName[count($normalizedName) - 1];
+            $normalizedBuiltIns[$normalizedName] = $value;
+        }
+
+        return array_merge($normalizedBuiltIns, $this->getClientContextParams());
+    }
+
+    protected function isUseEndpointV2()
+    {
+        return $this->endpointProvider instanceof EndpointProviderV2;
+    }
+
+    public static function emitDeprecationWarning() {
+        $phpVersion = PHP_VERSION_ID;
+        if ($phpVersion <  70205) {
+            $phpVersionString = phpversion();
+            @trigger_error(
+                "This installation of the SDK is using PHP version"
+                .  " {$phpVersionString}, which will be deprecated on August"
+                .  " 15th, 2023.  Please upgrade your PHP version to a minimum of"
+                .  " 7.2.5 before then to continue receiving updates to the AWS"
+                .  " SDK for PHP.  To disable this warning, set"
+                .  " suppress_php_deprecation_warning to true on the client constructor"
+                .  " or set the environment variable AWS_SUPPRESS_PHP_DEPRECATION_WARNING"
+                .  " to true.",
+                E_USER_DEPRECATED
+            );
+        }
+    }
+
 
     /**
      * Returns a service model and doc model with any necessary changes

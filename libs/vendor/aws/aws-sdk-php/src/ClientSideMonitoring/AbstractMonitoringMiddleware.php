@@ -118,12 +118,12 @@ abstract class AbstractMonitoringMiddleware
                 }
             }
             if ($value instanceof \Exception || $value instanceof \Throwable) {
-                return Promise\rejection_for($value);
+                return Promise\Create::rejectionFor($value);
             }
             return $value;
         };
 
-        return Promise\promise_for($handler($cmd, $request))->then($g, $g);
+        return Promise\Create::promiseFor($handler($cmd, $request))->then($g, $g);
     }
 
     private function getClientId()
@@ -149,6 +149,11 @@ abstract class AbstractMonitoringMiddleware
             'Version' => 1
         ];
         return $event;
+    }
+
+    private function getHost()
+    {
+        return $this->unwrappedOptions()->getHost();
     }
 
     private function getPort()
@@ -236,7 +241,7 @@ abstract class AbstractMonitoringMiddleware
         ) {
             self::$socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
             socket_clear_error(self::$socket);
-            socket_connect(self::$socket, '127.0.0.1', $this->getPort());
+            socket_connect(self::$socket, $this->getHost(), $this->getPort());
         }
 
         return self::$socket;
@@ -274,6 +279,7 @@ abstract class AbstractMonitoringMiddleware
                 // Errors unwrapping CSM config defaults to disabling it
                 $this->options = new Configuration(
                     false,
+                    ConfigurationProvider::DEFAULT_HOST,
                     ConfigurationProvider::DEFAULT_PORT
                 );
             }
