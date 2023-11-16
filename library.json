@@ -1,12 +1,12 @@
 {
-  "id": "{C3E98E6E-05A6-9A82-772B-426CB55F8ACD}",
-  "author": "Symcon GmbH",
-  "name": "Text to Speech (AWS Polly)",
-  "url": "https://www.symcon.de/",
-  "compatibility": {
-		"version": "7.0"
-	},
-  "version": "1.3",
-  "build": 0,
-  "date": 0
+    "id": "{C3E98E6E-05A6-9A82-772B-426CB55F8ACD}",
+    "author": "Symcon GmbH",
+    "name": "Text to Speech (AWS Polly)",
+    "url": "https://www.symcon.de/",
+    "compatibility": {
+        "version": "7.0"
+    },
+    "version": "1.3",
+    "build": 0,
+    "date": 0
 }

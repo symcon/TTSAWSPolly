@@ -1,14 +1,14 @@
 {
-  "id": "{6EFA02E1-360F-4120-B3DE-31EFCDAF0BAF}",
-  "name": "TTSAWSPolly",
-  "type": 3,
-  "vendor": "",
-  "aliases": [
-    "Text to Speech (AWS Polly)"
-  ],
-  "parentRequirements": [],
-  "childRequirements": [],
-  "implemented": [],
-  "prefix": "TTSAWSPOLLY",
-  "url": "https://github.com/symcon/TTSAWSPolly/tree/master/TTSAWSPolly"
+    "id": "{6EFA02E1-360F-4120-B3DE-31EFCDAF0BAF}",
+    "name": "TTSAWSPolly",
+    "type": 3,
+    "vendor": "",
+    "aliases": [
+        "Text to Speech (AWS Polly)"
+    ],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "TTSAWSPOLLY",
+    "url": "https://github.com/symcon/TTSAWSPolly/tree/master/TTSAWSPolly"
 }
