@@ -1,13 +1,13 @@
 {
-	"translations": {
-		"de": {
-			"Region": "Region",
-			"Voice": "Sprache",
-			"Output Format": "Ausgabeformat",
-			"Sample Rate": "Abtastrate",
-			"Text Type": "Texttyp",
-			"Default": "Standard",
-			"PCM (WAV) is not compatible with 22050 Hz as sample rate": "PCM (WAV) is nicht kompatibel mit einer Abtastrate von 22050 Hz"
-		}
-	}
+    "translations": {
+        "de": {
+            "Region": "Region",
+            "Voice": "Sprache",
+            "Output Format": "Ausgabeformat",
+            "Sample Rate": "Abtastrate",
+            "Text Type": "Texttyp",
+            "Default": "Standard",
+            "PCM (WAV) is not compatible with 22050 Hz as sample rate": "PCM (WAV) is nicht kompatibel mit einer Abtastrate von 22050 Hz"
+        }
+    }
 }

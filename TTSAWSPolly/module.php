@@ -9,7 +9,7 @@ class TTSAWSPolly extends IPSModule
     public function Create()
     {
 
-    //Never delete this line!
+        //Never delete this line!
         parent::Create();
 
         $this->RegisterPropertyString('AccessKey', '');
@@ -24,7 +24,7 @@ class TTSAWSPolly extends IPSModule
     public function ApplyChanges()
     {
 
-    //Never delete this line!
+        //Never delete this line!
         parent::ApplyChanges();
 
         if ($this->ReadPropertyString('OutputFormat') == 'pcm' && $this->ReadPropertyString('SampleRate') == '22050') {
@@ -68,6 +68,50 @@ class TTSAWSPolly extends IPSModule
         }
 
         return json_encode($data);
+    }
+
+    public function GenerateData(string $Text)
+    {
+        $data = $this->SynthesizeSpeech($Text);
+
+        if ($this->ReadPropertyString('OutputFormat') == 'pcm') {
+            $data = $this->AddWAVHeader($data);
+        }
+
+        return base64_encode($data);
+    }
+
+    public function GenerateFile(string $Text)
+    {
+        $dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'awspolly_' . $this->InstanceID;
+
+        if (!is_dir($dir)) {
+            mkdir($dir);
+        }
+
+        $data = $this->SynthesizeSpeech($Text);
+        $info = $this->ReadPropertyString('VoiceId') . '_' . $this->ReadPropertyString('SampleRate') . '_';
+
+        switch ($this->ReadPropertyString('OutputFormat')) {
+            case 'mp3':
+                $file = $info . md5($Text) . '.mp3';
+                break;
+            case 'pcm':
+                $file = $info . md5($Text) . '.wav';
+                $data = $this->AddWAVHeader($data);
+                break;
+            case 'ogg_vorbis':
+                $file = $info . md5($Text) . '.ogg';
+                break;
+            default:
+                throw new Exception('Unsupported output format ' . $this->ReadPropertyString('OutputFormat'));
+        }
+
+        if (!file_exists($dir . DIRECTORY_SEPARATOR . $file)) {
+            file_put_contents($dir . DIRECTORY_SEPARATOR . $file, $data);
+        }
+
+        return $dir . DIRECTORY_SEPARATOR . $file;
     }
 
     private function GetClient()
@@ -128,49 +172,5 @@ class TTSAWSPolly extends IPSModule
         $header .= 'data';
         $header .= pack('l', strlen($Data));
         return $header . $Data;
-    }
-
-    public function GenerateData(string $Text)
-    {
-        $data = $this->SynthesizeSpeech($Text);
-
-        if ($this->ReadPropertyString('OutputFormat') == 'pcm') {
-            $data = $this->AddWAVHeader($data);
-        }
-
-        return base64_encode($data);
-    }
-
-    public function GenerateFile(string $Text)
-    {
-        $dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'awspolly_' . $this->InstanceID;
-
-        if (!is_dir($dir)) {
-            mkdir($dir);
-        }
-
-        $data = $this->SynthesizeSpeech($Text);
-        $info = $this->ReadPropertyString('VoiceId') . '_' . $this->ReadPropertyString('SampleRate') . '_';
-
-        switch ($this->ReadPropertyString('OutputFormat')) {
-      case 'mp3':
-        $file = $info . md5($Text) . '.mp3';
-        break;
-      case 'pcm':
-        $file = $info . md5($Text) . '.wav';
-        $data = $this->AddWAVHeader($data);
-        break;
-      case 'ogg_vorbis':
-        $file = $info . md5($Text) . '.ogg';
-        break;
-      default:
-        throw new Exception('Unsupported output format ' . $this->ReadPropertyString('OutputFormat'));
-    }
-
-        if (!file_exists($dir . DIRECTORY_SEPARATOR . $file)) {
-            file_put_contents($dir . DIRECTORY_SEPARATOR . $file, $data);
-        }
-
-        return $dir . DIRECTORY_SEPARATOR . $file;
     }
 }
