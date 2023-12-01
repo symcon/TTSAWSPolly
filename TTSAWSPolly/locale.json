@@ -7,7 +7,8 @@
             "Sample Rate": "Abtastrate",
             "Text Type": "Texttyp",
             "Default": "Standard",
-            "PCM (WAV) is not compatible with 22050 Hz as sample rate": "PCM (WAV) is nicht kompatibel mit einer Abtastrate von 22050 Hz"
+            "PCM (WAV) is not compatible with 22050 Hz as sample rate": "PCM (WAV) is nicht kompatibel mit einer Abtastrate von 22050 Hz",
+            "https://www.symcon.de/en/service/documentation/module-reference/ttsawspolly/": "https://www.symcon.de/de/service/dokumentation/modulreferenz/ttsawspolly/"
         }
     }
 }
